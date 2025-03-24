@@ -1,141 +1,118 @@
 ﻿Imports Microsoft.Data.SqlClient
+Imports Microsoft.VisualBasic.ApplicationServices
 Public Class formMenu
     Dim connectionString As String = "Server=commngtcc105.mssql.somee.com;Database=commngtcc105;
                                      
 User Id=ublipa_SQLLogin_1;Password=nktg6ikffl;TrustServerCertificate=True;"
 
     Private Sub formMenu_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        PictureBox1.Image = Image.FromFile("bottomLeft.png")
-        PictureBox2.Image = Image.FromFile("bottomRight.png")
-        PictureBox3.Image = Image.FromFile("topLeft.png")
-        PictureBox4.Image = Image.FromFile("topRight.png")
-        PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage
-        PictureBox2.SizeMode = PictureBoxSizeMode.StretchImage
-        PictureBox3.SizeMode = PictureBoxSizeMode.StretchImage
-        PictureBox4.SizeMode = PictureBoxSizeMode.StretchImage
-        LoadData()
+        LoadDataGridView()
     End Sub
-
+    Private Sub LoadDataGridView()
+        Using conn As New SqlConnection(connectionString)
+            conn.Open()
+            Dim query As String = "SELECT Name, Contact, Email, EventName, Attendees, Type, Venue, DateBooked, StartTime, EndTime FROM g6_History"
+            Using cmd As New SqlCommand(query, conn)
+                Using reader As SqlDataReader = cmd.ExecuteReader()
+                    Dim dt As New DataTable()
+                    dt.Load(reader)
+                    DataGridView1.DataSource = dt
+                End Using
+            End Using
+        End Using
+    End Sub
     Private Sub submit_Click(sender As Object, e As EventArgs) Handles submit.Click
-        'user info'
+        ' User info
         Dim name = nameInfo.Text
         Dim contact = conInfo.Text
         Dim email = emailInfo.Text
-        'event info'
-        Dim eventN As String = eventName.Text
+        ' Event info
+        Dim eventN = eventName.Text
         Dim attendee = attendeeCo.Text
-        Dim eventType = cmbType.SelectedItem.ToString
-        Dim venue = cmbvenue.SelectedItem.ToString
-        'schedule'
+        Dim eventType = cmbType.SelectedItem.ToString()
+        Dim venue = cmbvenue.SelectedItem.ToString()
+        ' Schedule
         Dim dateSche = dtpDate.Value
         Dim startT = TimeOnly.FromDateTime(DateTimePicker1.Value)
         Dim endT = TimeOnly.FromDateTime(DateTimePicker2.Value)
 
-        Dim query = "INSERT INTO g6_userInfo (name, contact, email)" & "VALUES (@name, @contact, @email)"
-        Dim query1 = "INSERT INTO g6_venueInfo (eventN, attendee, eventType, venue) 
-                               VALUES (@eventN, @attendee, @eventType, @venue)"
-        Dim query2 = "INSERT INTO g6_schedule (dateSche, startT, endT)  VALUES (@dateSche, @startT, @endT)"
-        Dim query3 = "INSERT INTO g6_BookedVenue (EventName, Venue, DateBooked, StartTime, EndTime)  
-                               VALUES (@EventName, @Venue, @DateBooked, @StartTime, @EndTime)"
-        Dim query4 = "INSERT INTO g6_History (Name, Contact, Email, EventName, Venue, Attendees, Type, DateBooked, StartTime, EndTime)  
-                               VALUES (@name, @contact, @Email, @EventName, @Venue, @Attendees, @Type, @DateBooked, @StartTime, @EndTime)"
-
-
         Using conn As New SqlConnection(connectionString)
-            Using cmd As New SqlCommand(query, conn)
-                cmd.Parameters.AddWithValue("@name", name)
-                cmd.Parameters.AddWithValue("@contact", contact)
-                cmd.Parameters.AddWithValue("@email", email)
+            conn.Open()
+            Dim transaction = conn.BeginTransaction()
 
-                Try
-                    conn.Open()
-                    ' Execute the query
-                    cmd.ExecuteNonQuery()
-                Catch ex As Exception
-                    ' Handle any exceptions
-                    MessageBox.Show("Error: " & ex.Message)
-                End Try
-            End Using
+            Try
+                ' Check for existing bookings
+                Dim checkQuery = "SELECT COUNT(*) FROM g6_BookedVenue WHERE Venue = @Venue AND DateBooked = @DateBooked AND ((StartTime < @EndTime) AND (EndTime > @StartTime))"
+                Using checkCmd As New SqlCommand(checkQuery, conn, transaction)
+                    checkCmd.Parameters.AddWithValue("@Venue", venue)
+                    checkCmd.Parameters.AddWithValue("@DateBooked", dateSche)
+                    checkCmd.Parameters.AddWithValue("@StartTime", startT)
+                    checkCmd.Parameters.AddWithValue("@EndTime", endT)
+
+                    Dim count = Convert.ToInt32(checkCmd.ExecuteScalar())
+                    If count > 0 Then
+                        MessageBox.Show("This venue is already booked for the selected time. Please choose a different time.")
+                        transaction.Rollback()
+                        Return
+                    End If
+                End Using
+
+                ' Proceed with the insertions if no conflicts
+                Dim queries As New List(Of String) From {
+            "INSERT INTO g6_userInfo (Name, Contact, Email) VALUES (@name, @contact, @email)",
+            "INSERT INTO g6_venueInfo (EventName, Attendees, Type, Venue) VALUES (@eventN, @attendee, @eventType, @venue)",
+            "INSERT INTO g6_schedule (DateBooked, StartTime, EndTime) VALUES (@dateSche, @startT, @endT)",
+            "INSERT INTO g6_BookedVenue (EventName, Venue, DateBooked, StartTime, EndTime) VALUES (@eventN, @venue, @dateSche, @startT, @endT)",
+            "INSERT INTO g6_History (Name, Contact, Email, EventName, Venue, Attendees, Type, DateBooked, StartTime, EndTime) VALUES (@name, @contact, @email, @eventN, @venue, @attendee, @eventType, @dateSche, @startT, @endT)"
+        }
+
+                For Each query In queries
+                    Using cmd As New SqlCommand(query, conn, transaction)
+                        ' Add parameters based on the specific query
+                        If query.Contains("g6_userInfo") Then
+                            cmd.Parameters.AddWithValue("@name", name)
+                            cmd.Parameters.AddWithValue("@contact", contact)
+                            cmd.Parameters.AddWithValue("@email", email)
+                        ElseIf query.Contains("g6_venueInfo") Then
+                            cmd.Parameters.AddWithValue("@eventN", eventN)
+                            cmd.Parameters.AddWithValue("@attendee", attendee)
+                            cmd.Parameters.AddWithValue("@eventType", eventType)
+                            cmd.Parameters.AddWithValue("@venue", venue)
+                        ElseIf query.Contains("g6_schedule") Then
+                            cmd.Parameters.AddWithValue("@dateSche", dateSche)
+                            cmd.Parameters.AddWithValue("@startT", startT)
+                            cmd.Parameters.AddWithValue("@endT", endT)
+                        ElseIf query.Contains("g6_BookedVenue") Then
+                            cmd.Parameters.AddWithValue("@eventN", eventN)
+                            cmd.Parameters.AddWithValue("@venue", venue)
+                            cmd.Parameters.AddWithValue("@dateSche", dateSche)
+                            cmd.Parameters.AddWithValue("@startT", startT)
+                            cmd.Parameters.AddWithValue("@endT", endT)
+                        ElseIf query.Contains("g6_History") Then
+                            cmd.Parameters.AddWithValue("@name", name)
+                            cmd.Parameters.AddWithValue("@contact", contact)
+                            cmd.Parameters.AddWithValue("@email", email)
+                            cmd.Parameters.AddWithValue("@eventN", eventN)
+                            cmd.Parameters.AddWithValue("@venue", venue)
+                            cmd.Parameters.AddWithValue("@attendee", attendee)
+                            cmd.Parameters.AddWithValue("@eventType", eventType)
+                            cmd.Parameters.AddWithValue("@dateSche", dateSche)
+                            cmd.Parameters.AddWithValue("@startT", startT)
+                            cmd.Parameters.AddWithValue("@endT", endT)
+                        End If
+
+                        ' Execute the query
+                        cmd.ExecuteNonQuery()
+                    End Using
+                Next
+
+                transaction.Commit()
+                MessageBox.Show("Submission successful!")
+            Catch ex As Exception
+                transaction.Rollback()
+                MessageBox.Show("Error: " & ex.Message)
+            End Try
         End Using
-
-        Using conn As New SqlConnection(connectionString)
-            Using cmd2 As New SqlCommand(query1, conn)
-                cmd2.Parameters.AddWithValue("@eventN", eventN)
-                cmd2.Parameters.AddWithValue("@attendee", attendee)
-                cmd2.Parameters.AddWithValue("@eventType", eventType)
-                cmd2.Parameters.AddWithValue("@venue", venue)
-
-                Try
-                    conn.Open()
-                    ' Execute the query
-                    cmd2.ExecuteNonQuery()
-                Catch ex As Exception
-                    ' Handle any exceptions
-                    MessageBox.Show("Error: " & ex.Message)
-                End Try
-            End Using
-        End Using
-
-        Using conn As New SqlConnection(connectionString)
-            Using cmd3 As New SqlCommand(query2, conn)
-                cmd3.Parameters.AddWithValue("@dateSche", dateSche)
-                cmd3.Parameters.AddWithValue("@startT", startT)
-                cmd3.Parameters.AddWithValue("@endT", endT)
-
-                Try
-                    conn.Open()
-                    ' Execute the query
-                    cmd3.ExecuteNonQuery()
-                Catch ex As Exception
-                    ' Handle any exceptions
-                    MessageBox.Show("Error: " & ex.Message)
-                End Try
-            End Using
-        End Using
-
-        Using conn As New SqlConnection(connectionString)
-            Using cmd4 As New SqlCommand(query3, conn)
-                cmd4.Parameters.AddWithValue("@EventName", eventN)
-                cmd4.Parameters.AddWithValue("@Venue", venue)
-                cmd4.Parameters.AddWithValue("@DateBooked", dateSche)
-                cmd4.Parameters.AddWithValue("@StartTime", startT)
-                cmd4.Parameters.AddWithValue("@EndTime", endT)
-
-                Try
-                    conn.Open()
-                    ' Execute the query
-                    cmd4.ExecuteNonQuery()
-                Catch ex As Exception
-                    ' Handle any exceptions
-                    MessageBox.Show("Error: " & ex.Message)
-                End Try
-            End Using
-        End Using
-
-        Using conn As New SqlConnection(connectionString)
-            Using cmd5 As New SqlCommand(query4, conn)
-                cmd5.Parameters.AddWithValue("@name", name)
-                cmd5.Parameters.AddWithValue("@contact", contact)
-                cmd5.Parameters.AddWithValue("@Email", email)
-                cmd5.Parameters.AddWithValue("@EventName", eventN)
-                cmd5.Parameters.AddWithValue("@Venue", venue)
-                cmd5.Parameters.AddWithValue("@Attendees", attendee)
-                cmd5.Parameters.AddWithValue("@Type", eventType)
-                cmd5.Parameters.AddWithValue("@DateBooked", dateSche)
-                cmd5.Parameters.AddWithValue("@StartTime", startT)
-                cmd5.Parameters.AddWithValue("@EndTime", endT)
-
-                Try
-                    conn.Open()
-                    ' Execute the query
-                    cmd5.ExecuteNonQuery()
-                Catch ex As Exception
-                    ' Handle any exceptions
-                    MessageBox.Show("Error: " & ex.Message)
-                End Try
-            End Using
-        End Using
-        MsgBox("Form Submitted")
         nameInfo.Text = ""
         conInfo.Text = ""
         emailInfo.Text = ""
@@ -143,35 +120,109 @@ User Id=ublipa_SQLLogin_1;Password=nktg6ikffl;TrustServerCertificate=True;"
         attendeeCo.Text = ""
         cmbType.SelectedIndex = -1
         cmbvenue.SelectedIndex = -1
-
-
     End Sub
 
-    Private Sub LoadData()
-        ' Define the SQL query to retrieve data
-        Dim query As String = "SELECT * FROM g6_BookedVenue" ' Replace with your table name
 
-        ' Create a SqlConnection and SqlDataAdapter
-        Using connection As New SqlConnection(connectionString)
-            Dim adapter As New SqlDataAdapter(query, connection)
-            Dim dataTable As New DataTable()
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        LoadDataGridView()
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        ' User info
+        Dim name = nameInfo.Text
+        Dim contact = conInfo.Text
+        ' Event info
+        Dim eventN As String = eventName.Text
+        Dim attendee = attendeeCo.Text
+        Dim eventType = cmbType.SelectedItem.ToString()
+        Dim venue = cmbvenue.SelectedItem.ToString()
+        ' Schedule
+        Dim dateSche = dtpDate.Value
+        Dim startT = TimeOnly.FromDateTime(DateTimePicker1.Value)
+        Dim endT = TimeOnly.FromDateTime(DateTimePicker2.Value)
+
+        Using conn As New SqlConnection(connectionString)
+            conn.Open()
+            Dim transaction = conn.BeginTransaction()
 
             Try
-                ' Open the connection
-                connection.Open()
+                ' Check for existing bookings, but skip the current user's booking
+                Dim checkQuery As String = "SELECT COUNT(*) FROM g6_BookedVenue WHERE Venue = @Venue AND DateBooked = @DateBooked AND ((StartTime < @EndTime) AND (EndTime > @StartTime))"
+                Using checkCmd As New SqlCommand(checkQuery, conn, transaction)
+                    checkCmd.Parameters.AddWithValue("@venue", venue)
+                    checkCmd.Parameters.AddWithValue("@dateSche", dateSche)
+                    checkCmd.Parameters.AddWithValue("@startT", startT)
+                    checkCmd.Parameters.AddWithValue("@endT", endT)
 
-                ' Fill the DataTable with data from the database
-                adapter.Fill(dataTable)
+                    Dim count As Integer = Convert.ToInt32(checkCmd.ExecuteScalar())
+                    If count > 0 Then
+                        MessageBox.Show("This venue is already booked for the selected time by another user. Please choose a different time.")
+                        transaction.Rollback()
+                        Return
+                    End If
+                End Using
 
-                ' Bind the DataTable to the DataGridView
-                DataGridView1.DataSource = dataTable
+                ' Update the user information
+                Dim updateQuery As String = "UPDATE g6_userInfo SET name = @Name, contact = @Contact"
+                Using updateCmd As New SqlCommand(updateQuery, conn, transaction)
+                    updateCmd.Parameters.AddWithValue("@Name", name)
+                    updateCmd.Parameters.AddWithValue("@Contact", contact)
+                    updateCmd.ExecuteNonQuery()
+                End Using
+
+                ' Update the venue information
+                Dim updateVenueQuery As String = "UPDATE g6_venueInfo SET attendee = @Attendees, eventType = @Type, venue = @Venue"
+                Using updateVenueCmd As New SqlCommand(updateVenueQuery, conn, transaction)
+                    updateVenueCmd.Parameters.AddWithValue("@attendee", attendee)
+                    updateVenueCmd.Parameters.AddWithValue("@eventType", eventType)
+                    updateVenueCmd.Parameters.AddWithValue("@venue", venue)
+                    updateVenueCmd.ExecuteNonQuery()
+                End Using
+
+                ' Update the schedule
+                Dim updateScheduleQuery As String = "UPDATE g6_schedule SET dateSche = @DateBooked, startT = @StartTime, endT = @EndTime"
+                Using updateScheduleCmd As New SqlCommand(updateScheduleQuery, conn, transaction)
+                    updateScheduleCmd.Parameters.AddWithValue("@dateSche", dateSche)
+                    updateScheduleCmd.Parameters.AddWithValue("@startT", startT)
+                    updateScheduleCmd.Parameters.AddWithValue("@endT", endT)
+                    updateScheduleCmd.ExecuteNonQuery()
+                End Using
+
+                ' Update the history
+                Dim updateHistoryQuery As String = "UPDATE g6_History SET name = @Name, contact = @Contact, attendee = @Attendees, eventType = @Type, venue = @Venue, dateSche = @DateBooked, startT = @StartTime, endT = @EndTime"
+                Using updateHistoryCmd As New SqlCommand(updateHistoryQuery, conn, transaction)
+                    updateHistoryCmd.Parameters.AddWithValue("@Name", name)
+                    updateHistoryCmd.Parameters.AddWithValue("@Contact", contact)
+                    updateHistoryCmd.Parameters.AddWithValue("@attendee", attendee)
+                    updateHistoryCmd.Parameters.AddWithValue("@eventType", eventType)
+                    updateHistoryCmd.Parameters.AddWithValue("@venue", venue)
+                    updateHistoryCmd.Parameters.AddWithValue("@dateSche", dateSche)
+                    updateHistoryCmd.Parameters.AddWithValue("@startT", startT)
+                    updateHistoryCmd.Parameters.AddWithValue("@endT", endT)
+                    updateHistoryCmd.ExecuteNonQuery()
+                End Using
+
+                transaction.Commit()
+                MessageBox.Show("Update successful!")
             Catch ex As Exception
+                transaction.Rollback()
                 MessageBox.Show("Error: " & ex.Message)
             End Try
         End Using
     End Sub
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        LoadData()
+    Private userId As Integer
+    Private Sub DataGridView1_CellClick(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellContentClick
+        If e.RowIndex >= 0 Then
+            Dim selectedRow As DataGridViewRow = DataGridView1.Rows(e.RowIndex)
+
+            ' Load data into form fields
+            nameInfo.Text = selectedRow.Cells("Name").Value.ToString()
+            conInfo.Text = selectedRow.Cells("Contact").Value.ToString()
+            attendeeCo.Text = selectedRow.Cells("Attendees").Value.ToString()
+            cmbType.SelectedItem = selectedRow.Cells("Type").Value.ToString()
+            cmbvenue.SelectedItem = selectedRow.Cells("Venue").Value.ToString()
+        End If
     End Sub
 End Class

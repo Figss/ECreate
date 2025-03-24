@@ -54,6 +54,7 @@ Partial Class formMenu
         PictureBox3 = New PictureBox()
         PictureBox4 = New PictureBox()
         Button1 = New Button()
+        Button2 = New Button()
         CType(DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
         CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         CType(PictureBox2, ComponentModel.ISupportInitialize).BeginInit()
@@ -65,9 +66,9 @@ Partial Class formMenu
         ' 
         submit.BackColor = Color.Green
         submit.FlatStyle = FlatStyle.Flat
-        submit.Font = New Font("Arial", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        submit.Font = New Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         submit.ForeColor = SystemColors.ControlLightLight
-        submit.Location = New Point(180, 620)
+        submit.Location = New Point(132, 620)
         submit.Name = "submit"
         submit.Size = New Size(94, 43)
         submit.TabIndex = 48
@@ -153,7 +154,7 @@ Partial Class formMenu
         ' Label3
         ' 
         Label3.AutoSize = True
-        Label3.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label3.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label3.ForeColor = SystemColors.ControlLightLight
         Label3.Location = New Point(132, 556)
         Label3.Name = "Label3"
@@ -164,7 +165,7 @@ Partial Class formMenu
         ' Label4
         ' 
         Label4.AutoSize = True
-        Label4.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label4.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label4.ForeColor = SystemColors.ControlLightLight
         Label4.Location = New Point(115, 522)
         Label4.Name = "Label4"
@@ -175,7 +176,7 @@ Partial Class formMenu
         ' Label5
         ' 
         Label5.AutoSize = True
-        Label5.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label5.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label5.ForeColor = SystemColors.ControlLightLight
         Label5.Location = New Point(125, 489)
         Label5.Name = "Label5"
@@ -186,7 +187,7 @@ Partial Class formMenu
         ' Label11
         ' 
         Label11.AutoSize = True
-        Label11.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label11.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label11.ForeColor = SystemColors.ControlLightLight
         Label11.Location = New Point(49, 305)
         Label11.Name = "Label11"
@@ -197,7 +198,7 @@ Partial Class formMenu
         ' Label12
         ' 
         Label12.AutoSize = True
-        Label12.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label12.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label12.ForeColor = SystemColors.ControlLightLight
         Label12.Location = New Point(52, 370)
         Label12.Name = "Label12"
@@ -208,7 +209,7 @@ Partial Class formMenu
         ' Label13
         ' 
         Label13.AutoSize = True
-        Label13.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label13.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label13.ForeColor = SystemColors.ControlLightLight
         Label13.Location = New Point(26, 337)
         Label13.Name = "Label13"
@@ -241,7 +242,7 @@ Partial Class formMenu
         ' Label8
         ' 
         Label8.AutoSize = True
-        Label8.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label8.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label8.ForeColor = SystemColors.ControlLightLight
         Label8.Location = New Point(118, 404)
         Label8.Name = "Label8"
@@ -263,7 +264,7 @@ Partial Class formMenu
         ' Label9
         ' 
         Label9.AutoSize = True
-        Label9.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label9.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label9.ForeColor = SystemColors.ControlLightLight
         Label9.Location = New Point(67, 176)
         Label9.Name = "Label9"
@@ -281,7 +282,7 @@ Partial Class formMenu
         ' Label10
         ' 
         Label10.AutoSize = True
-        Label10.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label10.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label10.ForeColor = SystemColors.ControlLightLight
         Label10.Location = New Point(126, 143)
         Label10.Name = "Label10"
@@ -299,7 +300,7 @@ Partial Class formMenu
         ' Label14
         ' 
         Label14.AutoSize = True
-        Label14.Font = New Font("Arial", 9.0F, FontStyle.Bold)
+        Label14.Font = New Font("Arial", 9F, FontStyle.Bold)
         Label14.ForeColor = SystemColors.ControlLightLight
         Label14.Location = New Point(126, 211)
         Label14.Name = "Label14"
@@ -338,6 +339,8 @@ Partial Class formMenu
         ' 
         ' PictureBox1
         ' 
+        PictureBox1.BackgroundImage = My.Resources.Resources.bottomLeft
+        PictureBox1.BackgroundImageLayout = ImageLayout.Stretch
         PictureBox1.Location = New Point(3, 581)
         PictureBox1.Name = "PictureBox1"
         PictureBox1.Size = New Size(125, 125)
@@ -346,6 +349,8 @@ Partial Class formMenu
         ' 
         ' PictureBox2
         ' 
+        PictureBox2.BackgroundImage = My.Resources.Resources.bottomRight
+        PictureBox2.BackgroundImageLayout = ImageLayout.Stretch
         PictureBox2.Location = New Point(331, 581)
         PictureBox2.Name = "PictureBox2"
         PictureBox2.Size = New Size(125, 125)
@@ -355,6 +360,8 @@ Partial Class formMenu
         ' PictureBox3
         ' 
         PictureBox3.BackColor = Color.Transparent
+        PictureBox3.BackgroundImage = My.Resources.Resources.topLeft
+        PictureBox3.BackgroundImageLayout = ImageLayout.Stretch
         PictureBox3.Location = New Point(3, 8)
         PictureBox3.Name = "PictureBox3"
         PictureBox3.Size = New Size(125, 129)
@@ -364,6 +371,8 @@ Partial Class formMenu
         ' PictureBox4
         ' 
         PictureBox4.BackColor = Color.Transparent
+        PictureBox4.BackgroundImage = My.Resources.Resources.topRight
+        PictureBox4.BackgroundImageLayout = ImageLayout.Stretch
         PictureBox4.Location = New Point(331, 8)
         PictureBox4.Name = "PictureBox4"
         PictureBox4.Size = New Size(125, 125)
@@ -374,7 +383,7 @@ Partial Class formMenu
         ' 
         Button1.BackColor = Color.Green
         Button1.FlatStyle = FlatStyle.Flat
-        Button1.Font = New Font("Arial", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        Button1.Font = New Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         Button1.ForeColor = SystemColors.ControlLightLight
         Button1.Location = New Point(644, 669)
         Button1.Name = "Button1"
@@ -383,12 +392,26 @@ Partial Class formMenu
         Button1.Text = "Refresh"
         Button1.UseVisualStyleBackColor = False
         ' 
+        ' Button2
+        ' 
+        Button2.BackColor = Color.Green
+        Button2.FlatStyle = FlatStyle.Flat
+        Button2.Font = New Font("Arial", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        Button2.ForeColor = SystemColors.ControlLightLight
+        Button2.Location = New Point(234, 620)
+        Button2.Name = "Button2"
+        Button2.Size = New Size(94, 43)
+        Button2.TabIndex = 81
+        Button2.Text = "Update"
+        Button2.UseVisualStyleBackColor = False
+        ' 
         ' formMenu
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(71), CByte(184), CByte(129))
         ClientSize = New Size(935, 718)
+        Controls.Add(Button2)
         Controls.Add(Button1)
         Controls.Add(Label6)
         Controls.Add(Label15)
@@ -464,4 +487,5 @@ Partial Class formMenu
     Friend WithEvents PictureBox3 As PictureBox
     Friend WithEvents PictureBox4 As PictureBox
     Friend WithEvents Button1 As Button
+    Friend WithEvents Button2 As Button
 End Class
